@@ -51,8 +51,10 @@ class GameEngine:
                 continue
 
             if fruit.is_missed(self.height):
-                self.score += 1
+                self.lives -= 1
                 self.fruits.remove(fruit)
+            if self.lives <= 0:
+                self.game_state = "GAME_OVER"
 
     def reset(self):
         self.basket = Basket(self.width, self.height)
