@@ -1,3 +1,4 @@
+import random
 import pygame
 from game.basket import Basket
 from game.fruit import Fruit
@@ -8,6 +9,7 @@ class GameEngine:
         self.height = height
         self.basket = Basket(width, height)
         self.fruits = []
+        self.particles = []
         self.score = 0
         self.lives = 3
         self.spawn_delay = 750
@@ -21,7 +23,30 @@ class GameEngine:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 self.reset()
 
+    def create_splash(self, x, y):
+        for _ in range(10):
+            self.particles.append({
+                "x": x,
+                "y": y,
+                "vx": random.uniform(-3, 3),
+                "vy": random.uniform(-4, -1),
+                "life": 30,
+                "radius": random.randint(2, 4)
+            })
+
+    def update_particles(self):
+        for particle in self.particles[:]:
+            particle["x"] += particle["vx"]
+            particle["y"] += particle["vy"]
+            particle["vy"] += 0.2
+            particle["life"] -= 1
+
+            if particle["life"] <= 0:
+                self.particles.remove(particle)
+
     def update(self):
+        self.update_particles()
+
         if self.game_state != "PLAYING":
             return
 
@@ -50,6 +75,8 @@ class GameEngine:
             fruit.update()
 
             if basket_rect.colliderect(fruit.rect):
+                self.create_splash(fruit.x, fruit.y)
+
                 if fruit.is_hazard:
                     self.lives -= 1
                     if self.lives <= 0:
@@ -61,6 +88,7 @@ class GameEngine:
                 continue
 
             if fruit.is_missed(self.height):
+                self.create_splash(fruit.x, self.height - 25)
                 self.lives -= 1
                 self.fruits.remove(fruit)
 
@@ -70,6 +98,7 @@ class GameEngine:
     def reset(self):
         self.basket = Basket(self.width, self.height)
         self.fruits.clear()
+        self.particles.clear()
         self.score = 0
         self.lives = 3
         self.spawn_delay = 750
@@ -87,22 +116,74 @@ class GameEngine:
         for fruit in self.fruits:
             fruit.render(screen)
 
-        score_surf = self.font_medium.render(f"Score: {self.score}", True, (255, 220, 80))
+        for particle in self.particles:
+            pygame.draw.circle(
+                screen,
+                (255, 220, 80),
+                (int(particle["x"]), int(particle["y"])),
+                particle["radius"]
+            )
+
+        score_surf = self.font_medium.render(
+            f"Score: {self.score}",
+            True,
+            (255, 220, 80)
+        )
         screen.blit(score_surf, (25, 20))
 
-        lives_surf = self.font_medium.render(f"Lives: {self.lives}", True, (240, 80, 80))
-        screen.blit(lives_surf, (self.width - lives_surf.get_width() - 25, 20))
+        lives_surf = self.font_medium.render(
+            f"Lives: {self.lives}",
+            True,
+            (240, 80, 80)
+        )
+        screen.blit(
+            lives_surf,
+            (self.width - lives_surf.get_width() - 25, 20)
+        )
 
         if self.game_state == "GAME_OVER":
-            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            overlay = pygame.Surface(
+                (self.width, self.height),
+                pygame.SRCALPHA
+            )
             overlay.fill((0, 0, 0, 190))
             screen.blit(overlay, (0, 0))
 
-            over_surf = self.font_big.render("GAME OVER", True, (235, 70, 70))
-            screen.blit(over_surf, (self.width // 2 - over_surf.get_width() // 2, self.height // 2 - 40))
+            over_surf = self.font_big.render(
+                "GAME OVER",
+                True,
+                (235, 70, 70)
+            )
+            screen.blit(
+                over_surf,
+                (
+                    self.width // 2 - over_surf.get_width() // 2,
+                    self.height // 2 - 40
+                )
+            )
 
-            final_surf = self.font_medium.render(f"Final Score: {self.score}", True, (255, 255, 255))
-            screen.blit(final_surf, (self.width // 2 - final_surf.get_width() // 2, self.height // 2 + 10))
+            final_surf = self.font_medium.render(
+                f"Final Score: {self.score}",
+                True,
+                (255, 255, 255)
+            )
+            screen.blit(
+                final_surf,
+                (
+                    self.width // 2 - final_surf.get_width() // 2,
+                    self.height // 2 + 10
+                )
+            )
 
-            restart_surf = self.font_medium.render("Press [R] to Play Again", True, (200, 200, 200))
-            screen.blit(restart_surf, (self.width // 2 - restart_surf.get_width() // 2, self.height // 2 + 50))
+            restart_surf = self.font_medium.render(
+                "Press [R] to Play Again",
+                True,
+                (200, 200, 200)
+            )
+            screen.blit(
+                restart_surf,
+                (
+                    self.width // 2 - restart_surf.get_width() // 2,
+                    self.height // 2 + 50
+                )
+            )
