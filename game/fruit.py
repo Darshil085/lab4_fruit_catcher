@@ -8,11 +8,17 @@ class Fruit:
         self.x = random.randint(30, screen_width - 30)
         self.y = -self.radius * 2
         self.speed = random.uniform(4.0, 6.5)
-        self.color = random.choice([
-            (230, 45, 45),   # Apple
-            (245, 140, 30),  # Orange
-            (160, 60, 200),  # Grape
-        ])
+
+        self.is_hazard = random.random() < 0.2
+
+        if self.is_hazard:
+            self.color = (40, 40, 40)  # Rotten fruit / hazard
+        else:
+            self.color = random.choice([
+        (230, 45, 45),   # Apple
+        (245, 140, 30),  # Orange
+        (160, 60, 200),  # Grape
+    ])
 
     def update(self):
         self.y += self.speed
